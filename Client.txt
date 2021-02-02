@@ -1,0 +1,104 @@
+#include <ESP8266WiFi.h>
+#include <ESP8266HTTPClient.h>
+#include <ESP8266WiFiMulti.h>
+#include <WiFiClient.h>
+#include <ArduinoJson.h>
+#include<SoftwareSerial.h>            //Included SoftwareSerial Library
+
+  SoftwareSerial s(3,1);
+  ESP8266WiFiMulti WiFiMulti;
+
+  const char* ssid = "ESP8266-Access-Point";
+  const char* password = "123456789";
+  const char* serverNameTemp = "http://192.168.4.1/temperature";    //IP address or domain name with URL path
+  String temperature;
+  const int trigPin = D4;
+  const int echoPin = D3;
+
+   long duration;     // defines variables
+   int distance;
+   unsigned long previousMillis = 0;
+   const long interval = 5000; 
+
+  void setup()
+  {
+     Serial.begin(9600);
+     Serial.println();
+     s.begin(115200);
+     pinMode(trigPin, OUTPUT); 		// Sets the trigPin as an Output
+     pinMode(echoPin, INPUT); 		// Sets the echoPin as an Input
+ 
+     WiFi.mode(WIFI_STA);
+     WiFiMulti.addAP(ssid, password);
+     while((WiFiMulti.run() == WL_CONNECTED))
+     { 
+        delay(500);
+       Serial.print(".");
+     }
+       Serial.println("");
+       Serial.println("Connected to WiFi");
+  }
+
+  void loop() 
+  {
+     StaticJsonBuffer<1000> jsonBuffer;
+     JsonObject& root = jsonBuffer.createObject();
+     unsigned long currentMillis = millis();
+     delay(1000);
+     
+     if ((WiFiMulti.run() == WL_CONNECTED)) 
+     {
+         temperature = httpGETRequest(serverNameTemp);
+         Serial.println("Temperature: " + temperature );
+     
+         previousMillis = currentMillis;        // save the last HTTP GET Request
+     }
+     else
+     {
+         Serial.println("WiFi Disconnected");
+     }
+    int res=temperature.toInt();
+
+    // Clears the trigPin
+     digitalWrite(trigPin, LOW);
+     delayMicroseconds(2);
+
+    digitalWrite(trigPin, HIGH);            // Sets the trigPin on HIGH state for 10 micro seconds
+    delayMicroseconds(10);
+    digitalWrite(trigPin, LOW);
+
+    duration = pulseIn(echoPin, HIGH);     // Reads the echoPin, returns the sound wave travel time in microseconds
+
+    distance= duration*0.034/2;            // Calculating the distance
+     
+    root["data1"] = res ;
+    root["data2"] = distance;
+    root.printTo(s);
+    delay(1000);
+   }
+
+   String httpGETRequest(const char* serverName) 
+   {
+     WiFiClient client;
+     HTTPClient http;
+    
+    http.begin(client, serverName);      //IP address with path or Domain name with URL path 
+  
+    int httpResponseCode = http.GET();      // Send HTTP POST request
+  
+    String payload = "--"; 
+  
+    if (httpResponseCode>0) 
+    {
+       Serial.print("HTTP Response code: ");
+       Serial.println(httpResponseCode);
+       payload = http.getString();
+    }
+    else
+    {
+        Serial.print("Error code: ");
+        Serial.println(httpResponseCode);
+    }
+       http.end();   // Free resources
+       return payload;
+  }

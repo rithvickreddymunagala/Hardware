@@ -1,0 +1,211 @@
+#include <ArduinoJson.h>
+#include <ESP8266HTTPClient.h>
+#include <ESP8266WiFi.h>
+#include <SoftwareSerial.h>
+   SoftwareSerial s(D6,D5);
+
+   const char* ssid = "wifi-network id";         //ID of wifi network using which data is sent 
+   const char* password = "password";            //password of wifi network
+
+   const char* serverName = "http://btp-api.herokuapp.com";      //Domain name with URL path or IP address with path
+   const char* serverName1 = "http://btp-api-2.herokuapp.com";
+
+
+   unsigned long lastTime = 0;         // the following variables are unsigned longs because the time, measured in
+                                       // milliseconds, will quickly become a bigger number than can't be stored in an int.
+
+   unsigned long timerDelay = 5000;          // Set timer to 5 seconds (5000)
+   
+ 
+void setup() {
+   Serial.begin(115200);               // Initializing Serial port
+   s.begin(115200);
+   while (!Serial) continue;
+ 
+   WiFi.begin(ssid, password);
+   Serial.println("Connecting");
+   while(WiFi.status() != WL_CONNECTED) 
+   {
+     delay(500);
+     Serial.print(".");
+   }
+   Serial.println("");
+   Serial.print("Connected to WiFi network with IP Address: ");
+   Serial.println(WiFi.localIP());
+ 
+   Serial.println("Timer set to 5 seconds (timerDelay variable), it will take 5 seconds before publishing the first reading.");
+}
+ 
+void loop() 
+  {
+    StaticJsonBuffer<1000> jsonBuffer;
+    JsonObject& root = jsonBuffer.parseObject(s);
+    if(root == JsonObject::invalid())
+      return;
+
+   Serial.print("Data 1 ");
+   int data1=root["data1"];
+   Serial.print(data1);
+   Serial.println("");
+   Serial.print("Data 2 ");
+   int data2=root["data2"];
+   Serial.print(data2);
+   Serial.println("");
+
+   if((millis() - lastTime) > timerDelay) 
+   {  
+      if(WiFi.status()== WL_CONNECTED)                             //This condition checks WiFi connection status
+      {
+          HTTPClient http;
+      
+          http.begin(serverName);                                  // Domain name with URL path or IP address with path
+        
+          http.addHeader("Content-Type", "application/json");     // A HTTP request with a content type: application/json, is used here
+
+          int httpResponseCode;
+    	  if(data1==1000 && (data1>=0 && data1<=5))               //Conditions for various percentages
+          {
+             httpResponseCode = http.POST("{\"distance\" :\"100\"}");
+             Serial.print("100 percent");
+          }
+    	  else if(data1>=6 && data1<=13)
+          {
+             httpResponseCode = http.POST("{\"distance\" :\"90\"}");
+             Serial.print("90 percent");
+          }
+          else if(data1>=14 && data1<=20)
+          {
+             httpResponseCode = http.POST("{\"distance\" :\"80\"}"); 
+             Serial.print("80 percent");
+          }
+    	  else if(data1>=21 && data1<=30)
+          {
+             httpResponseCode = http.POST("{\"distance\" :\"70\"}"); 
+             Serial.print("70 percent");
+          }
+          else if(data1>=31 && data1<=40)
+          {
+             httpResponseCode = http.POST("{\"distance\" :\"60\"}");  
+             Serial.print("60 percent");
+          }
+    	  else if(data1>=41 && data1<=50)
+          {
+             httpResponseCode = http.POST("{\"distance\" :\"50\"}"); 
+             Serial.print("50 percent");
+          }
+          else if(data1>=51 && data1<=60)
+          {
+             httpResponseCode = http.POST("{\"distance\" :\"40\"}");  
+             Serial.print("40 percent");
+          }
+    	  else if(data1>=61 && data1<=70)
+          {
+       	     httpResponseCode = http.POST("{\"distance\" :\"30\"}"); 
+             Serial.print("30 percent");
+          }
+          else if(data1>=71 && data1<=80)
+          {
+             httpResponseCode = http.POST("{\"distance\" :\"20\"}");  
+             Serial.print("20 percent");
+          }
+          else if(data1>=81 && data1<=87)
+          {
+             httpResponseCode = http.POST("{\"distance\" :\"10\"}"); 
+             Serial.print("10 percent");
+          }
+          else if(data1>=88 && data1<=95)
+          {
+             httpResponseCode = http.POST("{\"distance\" :\"5\"}");  
+             Serial.print("5 percent");
+          }
+          else 
+          {
+              httpResponseCode = http.POST("{\"distance\" :\"0\" }"); 
+              Serial.print("0 percent"); 
+           }
+           Serial.println("");
+           delay(2000);
+           Serial.print("HTTP Response code 1: ");
+           Serial.println(httpResponseCode);
+        
+     	  http.end();  // Free resources
+
+          http.begin(serverName1);                           // Domain name with URL path or IP address with path
+          int httpResponseCode1;
+          if(data2==1000 && (data2>=0 && data2<=5))
+          {
+              httpResponseCode1 = http.POST("{\"distance\" :\"100\"}");
+              Serial.print("100 percent");
+          }
+          else if(data2>=6 && data2<=13)
+      	  {
+              httpResponseCode1 = http.POST("{\"distance\" :\"90\"}");
+              Serial.print("90 percent");
+          }
+    	  else if(data2>=14 && data2<=20)
+      	  {
+               httpResponseCode1 = http.POST("{\"distance\" :\"80\"}");  
+               Serial.print("80 percent");
+          } 
+          else if(data2>=21 && data2<=30)
+          {
+              httpResponseCode1 = http.POST("{\"distance\" :\"70\"}");
+              Serial.print("70 percent");
+          }  
+          else if(data2>=31 && data2<=40)
+          {
+              httpResponseCode1 = http.POST("{\"distance\" :\"60\"}");  
+              Serial.print("60 percent");
+
+          }
+          else if(data2>=41 && data2<=50)
+          {
+              httpResponseCode1 = http.POST("{\"distance\" :\"50\"}");  
+              Serial.print("50 percent");
+          }
+    	  else if(data2>=51 && data2<=60)
+      	  { 
+              httpResponseCode1 = http.POST("{\"distance\" :\"40\"}");  
+              Serial.print("40 percent");
+          }
+          else if(data2>=61 && data2<=70)
+          {
+              httpResponseCode1 = http.POST("{\"distance\" :\"30\"}");  
+              Serial.print("30 percent");
+          }
+          else if(data2>=71 && data2<=80)
+          {
+              httpResponseCode1 = http.POST("{\"distance\" :\"20\"}");  
+              Serial.print("20 percent");
+          }
+          else if(data2>=81 && data2<=87)
+          {
+              httpResponseCode1 = http.POST("{\"distance\" :\"10\"}");  
+              Serial.print("10 percent");
+          }
+          else if(data2>=88 && data2<=95)
+ 	  {
+  	      httpResponseCode1 = http.POST("{\"distance\" :\"5\"}");  
+              Serial.print("5 percent");
+          }
+          else 
+          {
+   	      httpResponseCode1 = http.POST("{\"distance\" :\"0\"}");
+              Serial.print("0 percent");
+          }
+          
+          Serial.println("");
+          delay(2000);
+          Serial.print("HTTP Response code 2: ");
+      	  Serial.println(httpResponseCode1);
+        
+          http.end();                                // Free resources
+      
+        }
+        else
+        {
+           Serial.println("WiFi Disconnected");
+        }
+        lastTime = millis();
+    }
+}

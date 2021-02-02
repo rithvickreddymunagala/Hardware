@@ -1,0 +1,57 @@
+#include <ESP8266WiFi.h>
+#include "ESPAsyncWebServer.h"
+#include <Wire.h>
+
+  const char* ssid = "ESP8266-Access-Point";    // Setting access point network credentials
+  const char* password = "123456789";
+
+  const int trigPin = D4;
+  const int echoPin = D3;
+
+  long duration;    // defines variables
+  int distance;
+
+  AsyncWebServer server(80);
+
+  String dist()
+ {
+   digitalWrite(trigPin, LOW);
+   delayMicroseconds(2);
+
+   digitalWrite(trigPin, HIGH);         // Sets the trigPin on HIGH state for 10 micro seconds
+   delayMicroseconds(10);
+   digitalWrite(trigPin, LOW);
+
+   duration = pulseIn(echoPin, HIGH);   // Reads the echoPin, returns the sound wave travel time in microseconds
+   distance= duration*0.034/2;          // Calculating the distance
+
+   Serial.print("Distance: ");          // Prints the distance on the Serial Monitor
+   Serial.println(distance);
+   delay(2000);
+
+   return String(distance);
+  }
+
+  void setup()
+  {
+    pinMode(trigPin, OUTPUT);       // Sets the trigPin as an Output
+    pinMode(echoPin, INPUT);        // Sets the echoPin as an Input
+    Serial.begin(115200);
+    Serial.println("");
+  
+    Serial.print("Setting AP (Access Point)…");      // Setting the ESP as an access point
+    WiFi.softAP(ssid, password);                     // Remove the password parameter, if you want the AP (Access Point) to be open
+
+    IPAddress IP = WiFi.softAPIP();
+    Serial.print("AP IP address: ");
+    Serial.println(IP);
+
+    server.on("/temperature", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send_P(200, "text/plain", dist().c_str());
+    });
+  
+   bool status;
+   server.begin();
+  }
+ 
+void loop(){}
